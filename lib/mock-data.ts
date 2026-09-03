@@ -24,6 +24,12 @@ export const countries = [
   "Nhật Bản",
 ] as const;
 
+export const degreeLevels = [
+  { value: "thpt", label: "THPT" },
+  { value: "dai_hoc", label: "Đại học" },
+  { value: "thac_si", label: "Thạc sĩ" },
+] as const;
+
 export const schools: School[] = [
   {
     id: "sch_01",
@@ -74,7 +80,7 @@ export const servicePackages: ServiceOption[] = [
   {
     id: "co_ban",
     name: "Cơ bản",
-    price: 18_000_000,
+    price: 15_000_000,
     description: "Phù hợp nếu hồ sơ của bạn đơn giản và đã chuẩn bị sẵn phần lớn giấy tờ.",
     benefits: [
       "Đối chiếu điểm chuẩn tự động",
@@ -86,7 +92,7 @@ export const servicePackages: ServiceOption[] = [
   {
     id: "toan_dien",
     name: "Toàn diện",
-    price: 45_000_000,
+    price: 30_000_000,
     description: "Đồng hành trọn gói từ tư vấn trường đến nộp hồ sơ.",
     benefits: [
       "Toàn bộ quyền lợi gói Cơ bản",
@@ -95,58 +101,6 @@ export const servicePackages: ServiceOption[] = [
       "Hỗ trợ ưu tiên qua điện thoại + email",
       "Theo dõi tiến độ xét duyệt hằng tuần",
     ],
-  },
-];
-
-export interface AdmissionRequest {
-  id: string;
-  customerName: string;
-  package: ServicePackage;
-  quote: number;
-  status: RequestStatus;
-  createdAt: string;
-}
-
-export const admissionRequests: AdmissionRequest[] = [
-  {
-    id: "req_2101",
-    customerName: "Trần Thị Bích",
-    package: "toan_dien",
-    quote: 45_000_000,
-    status: "cho_duyet",
-    createdAt: "2026-08-06 08:20",
-  },
-  {
-    id: "req_2100",
-    customerName: "Đỗ Ngọc Lan",
-    package: "toan_dien",
-    quote: 45_000_000,
-    status: "cho_duyet",
-    createdAt: "2026-08-05 09:12",
-  },
-  {
-    id: "req_2099",
-    customerName: "Lê Văn Hùng",
-    package: "co_ban",
-    quote: 18_000_000,
-    status: "da_duyet",
-    createdAt: "2026-08-04 14:30",
-  },
-  {
-    id: "req_2098",
-    customerName: "Phạm Thu Hà",
-    package: "toan_dien",
-    quote: 45_000_000,
-    status: "da_duyet",
-    createdAt: "2026-08-03 10:05",
-  },
-  {
-    id: "req_2097",
-    customerName: "Nguyễn Đức Anh",
-    package: "co_ban",
-    quote: 18_000_000,
-    status: "tu_choi",
-    createdAt: "2026-08-02 16:47",
   },
 ];
 
@@ -212,20 +166,6 @@ export const studentProfiles: StudentProfile[] = [
   },
 ];
 
-export interface ChatMessage {
-  from: "bot" | "user";
-  text: string;
-  time: string;
-}
-
-export interface Conversation {
-  id: string;
-  channel: "Web";
-  messageCount: number;
-  startedAt: string;
-  messages: ChatMessage[];
-}
-
 // Bộ câu hỏi & câu trả lời cho chatbot QnA (Tuần 2), dùng làm systemInstruction cho Gemini.
 // Đây là phạm vi kiến thức DUY NHẤT mà chatbot được phép trả lời dựa trên.
 export interface ChatbotQnaItem {
@@ -278,61 +218,6 @@ export const chatbotQna: ChatbotQnaItem[] = [
     question: "Tôi cần liên hệ ai nếu có thắc mắc khác?",
     answer:
       "Bạn có thể để lại câu hỏi ngay trong khung chat này, hoặc để lại email/số điện thoại trong form báo giá, đội ngũ sẽ liên hệ lại.",
-  },
-];
-
-export const conversations: Conversation[] = [
-  {
-    id: "conv_2081",
-    channel: "Web",
-    messageCount: 8,
-    startedAt: "2026-08-06 09:03",
-    messages: [
-      { from: "bot", text: "Chào bạn! Mình có thể giúp gì cho hồ sơ du học của bạn?", time: "09:03" },
-      { from: "user", text: "Gói Toàn diện có gì khác gói Cơ bản vậy ạ?", time: "09:04" },
-      { from: "bot", text: "Gói Toàn diện gồm tư vấn chọn trường 1:1, rà soát hồ sơ không giới hạn và hỗ trợ ưu tiên qua điện thoại.", time: "09:04" },
-    ],
-  },
-  {
-    id: "conv_2080",
-    channel: "Web",
-    messageCount: 4,
-    startedAt: "2026-08-05 20:15",
-    messages: [
-      { from: "bot", text: "Chào bạn! Mình có thể giúp gì cho hồ sơ du học của bạn?", time: "20:15" },
-      { from: "user", text: "Bao lâu thì có kết quả đối chiếu điểm chuẩn?", time: "20:16" },
-    ],
-  },
-  {
-    id: "conv_2079",
-    channel: "Web",
-    messageCount: 12,
-    startedAt: "2026-08-05 11:42",
-    messages: [
-      { from: "bot", text: "Chào bạn! Mình có thể giúp gì cho hồ sơ du học của bạn?", time: "11:42" },
-      { from: "user", text: "Em cần chuẩn bị giấy tờ gì để nộp hồ sơ?", time: "11:43" },
-      { from: "bot", text: "Bạn cần bảng điểm (PDF), ảnh chứng chỉ IELTS và ảnh CMND/CCCD hoặc hộ chiếu.", time: "11:43" },
-    ],
-  },
-  {
-    id: "conv_2078",
-    channel: "Web",
-    messageCount: 3,
-    startedAt: "2026-08-04 18:57",
-    messages: [
-      { from: "bot", text: "Chào bạn! Mình có thể giúp gì cho hồ sơ du học của bạn?", time: "18:57" },
-      { from: "user", text: "Chi phí dịch vụ là bao nhiêu?", time: "18:58" },
-    ],
-  },
-  {
-    id: "conv_2077",
-    channel: "Web",
-    messageCount: 6,
-    startedAt: "2026-08-03 13:21",
-    messages: [
-      { from: "bot", text: "Chào bạn! Mình có thể giúp gì cho hồ sơ du học của bạn?", time: "13:21" },
-      { from: "user", text: "Dịch vụ này gồm những gì ạ?", time: "13:22" },
-    ],
   },
 ];
 
