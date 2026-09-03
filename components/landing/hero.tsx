@@ -6,7 +6,7 @@ export function Hero() {
   return (
     <section className="pt-44">
       <div className="mx-auto max-w-7xl px-6">
-        <h1 className="max-w-2xl text-balance text-5xl font-medium tracking-tight md:text-6xl lg:mt-16">
+        <h1 className="max-w-2xl text-balance text-5xl font-bold uppercase tracking-tight text-red-600 md:text-6xl lg:mt-16">
           Tư vấn hồ sơ du học, rõ ràng từ báo giá đến xét duyệt
         </h1>
 
