@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { chatbotQna } from "@/lib/mock-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const MODEL = "gemini-3.5-flash-lite";
 
@@ -19,8 +20,13 @@ BỘ CÂU HỎI & CÂU TRẢ LỜI:
 ${chatbotQna.map((qa) => `Hỏi: ${qa.question}\nĐáp: ${qa.answer}`).join("\n\n")}`;
 
 interface ChatRequestBody {
+  conversationId?: string | null;
   message: string;
-  history?: { from: "bot" | "user"; text: string }[];
+}
+
+interface ChatMessageRow {
+  sender: "user" | "bot";
+  content: string;
 }
 
 export async function POST(request: Request) {
@@ -44,21 +50,67 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu message." }, { status: 400 });
   }
 
-  const history = (body.history ?? []).map((m) => ({
-    role: m.from === "user" ? ("user" as const) : ("model" as const),
-    parts: [{ text: m.text }],
+  const supabase = createSupabaseServerClient();
+
+  // Lấy hoặc tạo cuộc hội thoại cho phiên chat này.
+  let conversationId = body.conversationId ?? null;
+  if (conversationId) {
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("id", conversationId)
+      .maybeSingle();
+    if (!existing) conversationId = null;
+  }
+  if (!conversationId) {
+    const { data: created, error: createError } = await supabase
+      .from("conversations")
+      .insert({})
+      .select("id")
+      .single();
+    if (createError || !created) {
+      console.error("Supabase create conversation error:", createError);
+      return NextResponse.json(
+        { error: "Không tạo được cuộc hội thoại." },
+        { status: 500 },
+      );
+    }
+    conversationId = created.id;
+  }
+
+  const { error: insertUserError } = await supabase
+    .from("chat_messages")
+    .insert({ conversation_id: conversationId, sender: "user", content: message });
+  if (insertUserError) {
+    console.error("Supabase insert user message error:", insertUserError);
+    return NextResponse.json({ error: "Không lưu được tin nhắn." }, { status: 500 });
+  }
+
+  const { data: rows, error: fetchError } = await supabase
+    .from("chat_messages")
+    .select("sender, content")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true })
+    .returns<ChatMessageRow[]>();
+  if (fetchError || !rows) {
+    console.error("Supabase fetch history error:", fetchError);
+    return NextResponse.json({ error: "Không đọc được lịch sử hội thoại." }, { status: 500 });
+  }
+
+  const contents = rows.map((row) => ({
+    role: row.sender === "user" ? ("user" as const) : ("model" as const),
+    parts: [{ text: row.content }],
   }));
 
+  let reply: string;
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: MODEL,
       config: { systemInstruction, temperature: 0.2 },
-      contents: [...history, { role: "user", parts: [{ text: message }] }],
+      contents,
     });
-
-    const reply = response.text?.trim() || FALLBACK_ANSWER;
-    return NextResponse.json({ reply });
+    reply = response.text?.trim() || FALLBACK_ANSWER;
   } catch (error) {
     console.error("Gemini chat error:", error);
     return NextResponse.json(
@@ -66,4 +118,18 @@ export async function POST(request: Request) {
       { status: 502 },
     );
   }
+
+  const { error: insertBotError } = await supabase
+    .from("chat_messages")
+    .insert({ conversation_id: conversationId, sender: "bot", content: reply });
+  if (insertBotError) {
+    console.error("Supabase insert bot message error:", insertBotError);
+  }
+
+  await supabase
+    .from("conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", conversationId);
+
+  return NextResponse.json({ conversationId, reply });
 }

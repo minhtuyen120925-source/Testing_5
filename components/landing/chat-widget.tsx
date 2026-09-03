@@ -28,12 +28,12 @@ export function ChatWidget() {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const conversationIdRef = React.useRef<string | null>(null);
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
 
-    const history = messages;
     setMessages((prev) => [...prev, { from: "user", text: trimmed }]);
     setInput("");
     setLoading(true);
@@ -42,9 +42,10 @@ export function ChatWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, history }),
+        body: JSON.stringify({ conversationId: conversationIdRef.current, message: trimmed }),
       });
       const data = await res.json();
+      if (res.ok) conversationIdRef.current = data.conversationId;
       const reply = res.ok ? data.reply : (data.error ?? ERROR_MESSAGE);
       setMessages((prev) => [...prev, { from: "bot", text: reply }]);
     } catch {
