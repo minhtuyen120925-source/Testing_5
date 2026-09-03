@@ -14,6 +14,10 @@ import {
 import { listConversations } from "@/lib/supabase/conversations";
 import { formatDateTime } from "@/lib/utils";
 
+// Dữ liệu hội thoại thay đổi liên tục — luôn lấy mới mỗi lần vào trang,
+// không để Next.js đóng băng thành trang tĩnh lúc build.
+export const dynamic = "force-dynamic";
+
 export default async function AdminConversationsPage() {
   const conversations = await listConversations();
 

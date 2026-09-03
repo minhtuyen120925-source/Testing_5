@@ -16,6 +16,10 @@ import { degreeLevels, servicePackages } from "@/lib/mock-data";
 import { listQuoteRequests } from "@/lib/supabase/quote-requests";
 import { formatDateTime, formatVnd } from "@/lib/utils";
 
+// Danh sách yêu cầu thay đổi liên tục — luôn lấy mới mỗi lần vào trang,
+// không để Next.js đóng băng thành trang tĩnh lúc build.
+export const dynamic = "force-dynamic";
+
 function packageLabel(id: string) {
   return servicePackages.find((p) => p.id === id)?.name ?? id;
 }

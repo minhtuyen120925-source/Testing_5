@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { getConversation } from "@/lib/supabase/conversations";
 import { cn, formatDateTime } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminConversationDetailPage({
   params,
 }: PageProps<"/admin/conversations/[id]">) {
