@@ -1,9 +1,9 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { School } from "@/lib/mock-data";
+import type { SchoolRecord } from "@/lib/supabase/schools";
 
-export function SchoolMatch({ matches }: { matches: { school: School; passed: boolean }[] }) {
+export function SchoolMatch({ matches }: { matches: { school: SchoolRecord; passed: boolean }[] }) {
   return (
     <Card>
       <CardHeader>
