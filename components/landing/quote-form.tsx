@@ -32,6 +32,7 @@ const srOnlyStyle: React.CSSProperties = {
 const ERROR_MESSAGE = "Không gửi được yêu cầu báo giá, bạn thử lại sau nhé.";
 
 export function QuoteForm() {
+  const [fullName, setFullName] = React.useState("");
   const [country, setCountry] = React.useState<string>("");
   const [degreeLevel, setDegreeLevel] = React.useState<string>("dai_hoc");
   const [selectedPackage, setSelectedPackage] = React.useState<ServicePackage>("co_ban");
@@ -55,7 +56,7 @@ export function QuoteForm() {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ country, degreeLevel, package: selectedPackage, email, phone }),
+        body: JSON.stringify({ fullName, country, degreeLevel, package: selectedPackage, email, phone }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -165,6 +166,17 @@ export function QuoteForm() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Họ và tên</Label>
+              <Input
+                id="fullName"
+                required
+                placeholder="Nguyễn Văn A"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">

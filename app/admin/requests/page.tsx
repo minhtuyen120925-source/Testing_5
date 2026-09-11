@@ -42,6 +42,7 @@ export default async function AdminRequestsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Tên khách</TableHead>
               <TableHead>Liên hệ</TableHead>
               <TableHead>Quốc gia · Bậc học</TableHead>
               <TableHead>Gói dịch vụ</TableHead>
@@ -54,16 +55,17 @@ export default async function AdminRequestsPage() {
           <TableBody>
             {requests.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   Chưa có yêu cầu báo giá nào.
                 </TableCell>
               </TableRow>
             )}
             {requests.map((req) => (
               <TableRow key={req.id}>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium">{req.fullName}</TableCell>
+                <TableCell>
                   <div>{req.email}</div>
-                  <div className="text-xs font-normal text-muted-foreground">{req.phone}</div>
+                  <div className="text-xs text-muted-foreground">{req.phone}</div>
                 </TableCell>
                 <TableCell>
                   {req.country} · {degreeLevelLabel(req.degreeLevel)}

@@ -4,6 +4,7 @@ import type { RequestStatus, ServicePackage } from "@/lib/mock-data";
 
 export interface QuoteRequest {
   id: string;
+  fullName: string;
   country: string;
   degreeLevel: string;
   package: ServicePackage;
@@ -16,6 +17,7 @@ export interface QuoteRequest {
 
 interface QuoteRequestRow {
   id: string;
+  full_name: string;
   country: string;
   degree_level: string;
   package: ServicePackage;
@@ -30,7 +32,7 @@ export async function listQuoteRequests(): Promise<QuoteRequest[]> {
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase
     .from("quote_requests")
-    .select("id, country, degree_level, package, price, email, phone, status, created_at")
+    .select("id, full_name, country, degree_level, package, price, email, phone, status, created_at")
     .order("created_at", { ascending: false })
     .returns<QuoteRequestRow[]>();
 
@@ -41,6 +43,7 @@ export async function listQuoteRequests(): Promise<QuoteRequest[]> {
 
   return (data ?? []).map((row) => ({
     id: row.id,
+    fullName: row.full_name,
     country: row.country,
     degreeLevel: row.degree_level,
     package: row.package,

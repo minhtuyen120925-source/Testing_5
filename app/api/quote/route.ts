@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { ServicePackage } from "@/lib/mock-data";
+import { notifyNewQuoteRequest } from "@/lib/webhooks/make";
+import { servicePackages, type ServicePackage } from "@/lib/mock-data";
 
 // Bảng giá chính thức — nguồn duy nhất để tính báo giá, không tin vào giá trị
 // (nếu có) mà trình duyệt gửi lên.
@@ -12,6 +13,7 @@ const PRICE_TABLE: Record<ServicePackage, number> = {
 const DEGREE_LEVELS = ["thpt", "dai_hoc", "thac_si"] as const;
 
 interface QuoteRequestBody {
+  fullName: string;
   country: string;
   degreeLevel: string;
   package: string;
@@ -27,13 +29,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Body không hợp lệ." }, { status: 400 });
   }
 
+  const fullName = body.fullName?.trim();
   const country = body.country?.trim();
   const degreeLevel = body.degreeLevel?.trim();
   const packageId = body.package?.trim() as ServicePackage;
   const email = body.email?.trim();
   const phone = body.phone?.trim();
 
-  if (!country || !email || !phone) {
+  if (!fullName || !country || !email || !phone) {
     return NextResponse.json({ error: "Thiếu thông tin bắt buộc." }, { status: 400 });
   }
   if (!DEGREE_LEVELS.includes(degreeLevel as (typeof DEGREE_LEVELS)[number])) {
@@ -49,6 +52,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("quote_requests")
     .insert({
+      full_name: fullName,
       country,
       degree_level: degreeLevel,
       package: packageId,
@@ -66,6 +70,14 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await notifyNewQuoteRequest({
+    requestId: data.id,
+    customerName: fullName,
+    email,
+    package: servicePackages.find((p) => p.id === packageId)?.name ?? packageId,
+    price,
+  });
 
   return NextResponse.json({ requestId: data.id, price });
 }
