@@ -1,24 +1,28 @@
-import { cookies } from "next/headers";
-import { LogOut } from "lucide-react";
+import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/portal/logout-button";
 import { PortalClient } from "@/components/portal/portal-client";
-import { PROFILE_COOKIE_NAME } from "@/lib/portal";
-import { getProfileDocuments, type ProfileDocuments } from "@/lib/supabase/student-profiles";
+import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
+import { getOrCreateProfileForUser, getProfileDocuments } from "@/lib/supabase/student-profiles";
 import { listSchools } from "@/lib/supabase/schools";
 
-const EMPTY_DOCUMENTS: ProfileDocuments = { transcript: null, ielts: null, identity: null };
-
-// Hồ sơ gắn với cookie riêng của từng khách — luôn lấy mới mỗi lần vào
-// trang, không để Next.js đóng băng thành trang tĩnh lúc build.
+// Hồ sơ gắn với người dùng đã đăng nhập — luôn lấy mới mỗi lần vào trang,
+// không để Next.js đóng băng thành trang tĩnh lúc build.
 export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
-  const cookieStore = await cookies();
-  const profileId = cookieStore.get(PROFILE_COOKIE_NAME)?.value;
+  const supabase = await createSupabaseAuthServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
+  const profileId = await getOrCreateProfileForUser(supabase, user.id);
   const [documents, schools] = await Promise.all([
-    profileId ? getProfileDocuments(profileId) : Promise.resolve(EMPTY_DOCUMENTS),
+    getProfileDocuments(supabase, profileId),
     listSchools(),
   ]);
 
@@ -29,12 +33,9 @@ export default async function PortalPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-6">
           <div>
             <p className="text-sm text-muted-foreground">Cổng hồ sơ học viên</p>
-            <h1 className="text-2xl font-medium tracking-tight">Nộp giấy tờ &amp; đối chiếu điểm chuẩn</h1>
+            <h1 className="text-2xl font-medium tracking-tight">{user.email}</h1>
           </div>
-          <Button variant="outline">
-            <LogOut className="size-4" />
-            Đăng xuất
-          </Button>
+          <LogoutButton />
         </div>
 
         <PortalClient initialDocuments={documents} schools={schools} />

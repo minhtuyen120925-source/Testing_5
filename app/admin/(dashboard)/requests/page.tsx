@@ -1,5 +1,5 @@
 import { Check, X } from "lucide-react";
-import { approveQuoteRequest, rejectQuoteRequest } from "@/app/admin/requests/actions";
+import { approveQuoteRequest, rejectQuoteRequest } from "@/app/admin/(dashboard)/requests/actions";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

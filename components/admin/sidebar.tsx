@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FileClock,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
   School,
   Users,
@@ -12,6 +13,15 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
+
+function useAdminLogout() {
+  const router = useRouter();
+  return async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/admin/login");
+    router.refresh();
+  };
+}
 
 export const adminNavItems: { name: string; href: string; icon: LucideIcon }[] = [
   { name: "Tổng quan", href: "/admin", icon: LayoutDashboard },
@@ -27,6 +37,7 @@ function isActive(pathname: string, href: string) {
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const handleLogout = useAdminLogout();
 
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:flex lg:flex-col">
@@ -59,13 +70,21 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="border-t p-3">
+      <div className="space-y-1 border-t p-3">
         <Link
           href="/"
           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/70 duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           Xem trang khách ↗
         </Link>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/70 duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <LogOut className="size-4.5 shrink-0" />
+          Đăng xuất
+        </button>
       </div>
     </aside>
   );

@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { DOC_CONFIG, extractDocument, type DocType } from "@/lib/gemini/extract-document";
-import { createProfile, profileExists, upsertStudentDocument } from "@/lib/supabase/student-profiles";
-import { PROFILE_COOKIE_NAME } from "@/lib/portal";
+import { getOrCreateProfileForUser, upsertStudentDocument } from "@/lib/supabase/student-profiles";
+import { createSupabaseAuthServerClient } from "@/lib/supabase/auth-server";
 
 const DOC_TYPES: DocType[] = ["transcript", "ielts", "identity"];
 
 export async function POST(request: Request) {
+  const supabase = await createSupabaseAuthServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Bạn cần đăng nhập để nộp giấy tờ." }, { status: 401 });
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -41,9 +49,7 @@ export async function POST(request: Request) {
 
   let profileId: string;
   try {
-    const cookieStore = await cookies();
-    const existing = cookieStore.get(PROFILE_COOKIE_NAME)?.value;
-    profileId = existing && (await profileExists(existing)) ? existing : await createProfile();
+    profileId = await getOrCreateProfileForUser(supabase, user.id);
   } catch (error) {
     console.error("Portal upload: resolve profile error:", error);
     return NextResponse.json(
@@ -58,7 +64,7 @@ export async function POST(request: Request) {
   const result = await extractDocument(docType as DocType, base64, file.type);
 
   try {
-    await upsertStudentDocument(profileId, docType as DocType, {
+    await upsertStudentDocument(supabase, profileId, docType as DocType, {
       fileName: file.name,
       status: result.status,
       reason: result.reason,
@@ -72,21 +78,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = NextResponse.json({
+  return NextResponse.json({
     docType,
     fileName: file.name,
     status: result.status,
     reason: result.reason ?? null,
     extracted: result.extracted,
   });
-
-  response.cookies.set(PROFILE_COOKIE_NAME, profileId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 60,
-  });
-
-  return response;
 }
